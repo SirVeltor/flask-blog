@@ -1,0 +1,44 @@
+Blueprints en Flask
+
+Para organizar la aplicación en módulos, utilizamos los Blueprints. 
+
+Para hacer Blueprints primero lo declaramos e inicializamos y luego lo registramos.
+
+1 - Inicialización y declaración
+
+from flask import Blueprint
+
+public = Blueprint('public', __name__, template_folder='template', static_folder='static')
+
+from . import routes
+
+
+El primer parámetro es el nombre del blueprint, el segundo es el módulo al que pertence al nombre de la importación
+que suele ser el nombre del módulo. Luego tenemos 2 parámetros para indicar la carpeta de templates y la de archivos
+estáticos. 
+
+Por último, tenemos que importar en el Blueprint las rutas que tiene asocidadas en otro archivo para que la app sea
+consciente de que existen. Si definiésemos las rutas en este mismo archivo de declaración del Blueprint, no haría falta
+importarlas. 
+
+2 - Rutas para el blueprint
+
+Importamos el blueprint desde su archivo
+
+from . import public
+
+@public.route('/')
+
+En este caso, utilizamos el blueprint para añadirle el decorador route y así definir los endpoints que tendrá ese blueprint
+y su vista asociada.
+
+3 - Registro del Blueprint
+
+from .public import public_bp
+app.register_blueprint(public_bp)
+
+from .auth import auth_db
+app.register_blueprint(auth_db)
+
+*** IMPORTANTE --> Poner el import de los blueprints en la linea anterior a la que se registren y no al principio de los archivos con el resto
+de imports ya que sino da error de importaciones circulares

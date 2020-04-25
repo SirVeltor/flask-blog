@@ -1,0 +1,40 @@
+{% extends 'base_template.html' %}
+
+{% block title %} Login {% endblock %}
+
+{% block content %}
+
+    <form action="" method="POST" class="form" novalidate>
+        {{form.form.hidden_tag()}}
+
+        <div>
+            {{form.form.email.label}}
+            {{form.form.email}}
+            {% for error in form.form.email.errors %}
+                <span style="color: red">{{error}}</span>
+            {% endfor %}
+        </div>
+        <div>
+            {{form.form.password.label}}
+            {{form.form.password}}
+            {% for error in form.form.password.errors %}
+                <span style="color: red">{{error}}</span>
+            {% endfor %}
+        </div>
+        <div>
+            {{form.form.remember_me()}} {{form.form.remember_me.label}}
+        </div>
+        <div>
+            {{form.form.submit()}}
+        </div>
+    </form>
+    {% if form.message %}
+        <div>
+            <label>{{form.message}}</label>
+        </div>
+    {% endif %}
+    <div>
+        ¿No tienes cuenta? <a href="{{url_for('auth.show_signup_form')}}">Regístrate</a>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,122 @@
+Base de datos en Flask - SQLALCHEMY
+
+Para instalar SQLALCHEMY en el proyecto, instalamos el siguiente comando: pip install flask-sqlalchemy
+
+CONFIGURACION
+==============
+
+Para instanciar la base de datos tenemos que hacer el siguiente import:
+	from flask_sqlalchemy import SQLAlchemy. 
+	
+Luego la instanciamos de la siguiente forma: 
+	db = SQLAlchemy(app)
+
+Lo podemos hacer como aparece arriba o si queremos hacerlo posteriormente en una función que cree la aplicación se haría tal que así: 
+
+	db = SQLAlchemy()
+	...
+	
+	def create_app():
+		db.init_app(app)
+
+Luego hay que definir la URI de la base de datos a la que queremos conectarnos con la siguiente
+estructura:
+	base_de_datos(+driver)://nombre_usuario:contraseña@host:puerto/nombre_bd
+	
+Esta URI es un parámetro de la configuración de la app asi que se la tenemos que pasar a la app 
+en forma de config de tal forma: 
+	app.config['SQLALCHEMY_DATABASE_URI']='postgresql://postgres:testing@localhost:5432/miniblog'
+
+
+CREACIÓN DE UN MODELO
+======================
+
+En la clase que usaremso de Modelo tendremos que importar el objeto de tipo SQLAlchemy (osea, db) para que
+la clase herede de db.Model:
+
+	class Post(db.Model):
+		id = db.Column(db.Integer, primary_key=True)
+		user_id = db.Column(db.Integer, db.ForeignKey('blog_user.id', ondelete='CASCADE'), nullable=False)
+		title = db.Column(db.String(256), nullable=False)
+		title_slug = db.Column(db.String(256), unique=True, nullable=False)
+		content = db.Column(db.Text)
+	
+Cada campo de la tabla de la base de datos se define usando db.Column y para indicar que un campo es la
+PRIMARY KEY, le añadimos como parámetro primary_key=True. También debemos especificar qué tipo de dato
+contiene la columna (db.String, db.Integer, db.Text, etc.).
+
+Con el atributo de clase __tablename__ le indicamos un nuevo nombre a la tabla diferente al que cogería por defecto,
+es decir, el nombre de la clase pero pasándolo a notación camel_case (Ejemplo_post_asdf). 
+
+También a cada columna se le asigna como nombre el que tiene el atributo de clase. 
+
+
+GUARDAR EL MODELO
+==================
+
+Para guardar un objeto en bb.dd debe estar previamente asociado al objeto session. Una vez asociado, 
+para que los cambios se ven reflejados en la bb.dd hay que hacer un commit. 
+
+Podemos definir un método en cada Clase del Modelo que haga este guardado:
+
+	def save():
+		if not self.id:
+			db.session.add(self) --> Añadimos el objeto a la sessión.
+		db.session.commit() --> Comietamos el objeto para que guarde en bb.dd
+
+QUERIES
+========
+
+Con un get podemos recuperar un valor por su primary_key --> User.query.get(id)
+
+Cson un filter_by podemos hacer búsquedas filtrando por un campo de clase--> User.query.filter_by(email=email).first()
+
+Filtrado más complejo --> user.query.filter(User.email.endswith('@example.com')).all()
+
+first() --> Devuelve el primer valor que encuentre.  User.query.filter_by(email=email).first()
+all() --> Devuelve todos los valores que encuentre.  User.query.filter_by(email=email).all()
+
+order_by --> User.query.order_by(User.name).all()
+
+limit --> User.query.limit(20).all()
+
+get_or_404() // first_or_404() --> Sirve para levantar un error 404 en vez de devolver None.
+
+	user = User.query.filter_by(username=form.username.data).first_or_404()
+	
+También le podemos pasar un argumento para mostrar el error. 
+
+	user = User.query.filter_by(username=form.username.data).first_or_404('No hay datos para el usuario {}'.format(username))
+	
+
+
+CREAR UN OBJETO
+===============
+
+user = User(name=form.name.data, email=form.email.data)
+db.session.add(user)
+db.session.commit()
+
+ELIMINAR UN OBJETO
+==================
+
+db.session.delete(user)
+db.session.commit()
+
+
+CREAR LA BB.DD
+==============
+
+Primero tenemos que crear a mano la bb.dd en el editor de la base de datos de turno (mysql, postgre, etc.)
+
+Luego, en el termianl de Python ejecutamos los siguientes comandos:
+
+from x import create_app
+from x import db
+
+db.create_all(app=create_app())
+
+De esta forma creamos la base de datos a partir de un contexto, donde le indicamos cuál es la aplicación.
+En este caso, como la aplicación se crea con el metodo create_app() y devuelve una app, por eso lo
+llamamos aquí.
+

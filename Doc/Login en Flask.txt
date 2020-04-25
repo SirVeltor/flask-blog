@@ -1,0 +1,103 @@
+Primero de todo instalamos Flask_login con pip install flask-login
+
+Después importamos en LoginManager de flask_login. 
+
+Creamos una instancia de LoginManager y le pasamos por parámetro la aplicación de Flask.
+	loginManager = LoginManager(app)
+	
+Para más adelante, con la instancia de loginManager utilizamos la propiedad de login_view para que si un usuario
+accede a una vista que requiere login, le rediriga a la vista que hemos definido para hacer el login.
+	loginManager.login_view = "login"
+	
+Creamos un modelo donde hacemos una clase User. Esta clase tiene que implementar una serie de propiedades y métodos:
+
+	- is_authenticated: una propiedad que es True si el usuario se ha autenticado y False en caso contrario.
+	- is_active: una propiedad que indica si la cuenta del usuario está activa (True) o no (False). 
+		Es decisión tuya definir qué significa que una cuenta de usuario está activa. 
+		Por ejemplo, se ha verificado el email o no ha sido eliminada por un administrador. 
+		Por defecto, los usuarios de cuentas inactivas no pueden autenticarse.
+	- is_anonymous: una propiedad que vale False para los usuarios reales y True para los usuarios anónimos.
+	- get_id(): un método que devuelve un string (unicode en caso de Python 2) con el ID único del usuario. 
+		Si el ID del usuario fuera int o cualquier otro tipo, es tu responsabilidad convertirlo a string.
+
+Si nuestra clase User hereda de UserMixin, ya tendrá estos métodos y propiedades declarados.
+
+La clase User tendrá como constructor el id, el nombre, el email y el password. 
+
+El password no lo guardaremos tal cual sino que se guardará a través del método generate_password_hash y para ver si un nuevo password
+introducido coincide con el almacenado, creamos un método que compare el hash del password guardado con el introducido. 
+
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
+
+
+class User(UserMixin):
+    def __init__(self, id, name, email, password, is_admin=False):
+        self.id = id
+        self.name = name
+        self.email = email
+        self.password = generate_password_hash(password)
+        self.is_admin = is_admin
+
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+
+    def __repr__(self):
+        return 'Use{}'.format(self.email)
+		
+Para saber si el usuario que está en la sesión utilizamos el método user_loader de LoginManager. Este método recibe un string con el ID del usuario de la sesión
+y podemos recuperar el usuario de nuestra bb.dd que tiene ese ID o sino, devolvemos un None para saber que ese usuario es anónimo.
+
+@login_manager.user_loader
+def load_user(user_id):
+    print('Ejecutando load_user !!! -->', user_id)
+    for user in users:
+        if user.id == int(user_id):
+            return user
+    return None
+		
+Creamos un formulario de Login como los anteriores que tendrá los campos de email, password, remember_me y submit.
+
+Creamos una vista de login la cual mirará si el usuario ya está autentificado con el método is_authenticated de la clase current_user.
+Si lo está, redirigiremos al usuario a la vista de index. 
+
+Si no lo está, validaremos que el formulario es correcto y recuperaremos el usuario a través de un método que mire si el email introducido
+es el de algun usuario registrado. 
+
+Si es así, miraremos si el password es correcto y si lo es logearemos al usuario con el método login_user() y le pasamos por parámetro el usuario y 
+el remember_me. Si el usuario no se encuentra, devolveremos el template del formulario con un mensaje que el usuario no se ha encontrado.
+
+Por último, modificaremos el método de registro donde recuperaremos el nombre del usuario, su correo y contraseña y los utilizaremos para instanciar
+la clase User y le pasamos a su constructor estos datos y logueamos al usuario.
+
+Por último, crearemos la vista de Logout donde simplemente utilizamos el método logout_user(). 
+
+Para proteger las vistas que necesitan un login, debajo del app.route, utilizamos el decorador de @login_required importándolo de LoginManager.
+
+@app.route('/login/', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = get_user(form.email.data)
+        if user is not None and User.check_password(form.password.data):
+            login_user(user, remember=form.remember_me.data)
+            next_page = request.args.get('next')
+            if not next_page or url_parse(next_page).netloc != '':
+                return redirect(url_parse('index'))
+            else:
+                return redirect(next_page)
+        else:
+            data = {'form': form, 'message': 'Usuario no encontrado'}
+            return render_template('login_form.html', form=data)
+    data = {'form': form}
+    return render_template('login_form.html', form=data)
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))

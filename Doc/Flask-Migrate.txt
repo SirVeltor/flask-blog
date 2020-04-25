@@ -1,0 +1,37 @@
+Actualizar base de datos  SQLALCHEMY - flask-migrate
+
+CONFIGURACIÓN
+==============
+
+Para instalar Flask-Migrate en el proyecto, primero ejecutamos el comando: 
+	pip install flask-migrate
+	
+Luego, importamos la dependencia en la raíz del proyecto:
+	from flask_migrate import Migrate
+	
+	migrate = Migrate()
+	
+Por último, inciailzamos el objeto migrate de la siguiente manera:
+	
+	migrate.init_app(app, db)
+	
+USO DE FLASK-MIGRATE
+====================
+
+Esta librería se utiliza desde línea de comandos. 
+
+Comandos principales:
+
+	-flask db init: Crea una estructura de directorios y ficheros necesarios para la ejecución de esta 
+	extensión. Se ejecuta solo una vez, al principio.
+	-flask db migrate: Navega entre los modelos en busca de actualizaciones y genera los ficheros 
+	de migración de base de datos con los cambios detectados.
+	-flask db upgrade: Lleva a cabo la migración de la base de datos
+
+Pasos:
+	1 - Invocar al comando init desde el terminal:
+		flask db init
+	2 - Ejecutar elcomando de migrate: 
+		flask db migrate -m "Initial database"
+	3 - Ejecutar el comando flask db upgrade:
+		flask db upgrade

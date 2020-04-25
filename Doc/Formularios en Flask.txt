@@ -1,0 +1,50 @@
+FlaskForm
+
+Primero, importamos FlaskForm de la librería flask_wtf.
+
+Para hacer un formulario en Flask creamos una clase que herede de FlaskForm.
+
+Esa clase tendrá tantos campos de clase como queramos que tenga el formulario. Hay diferentes tipos de campos de clase, 
+StringField, IntegerField, EmailField, TextAreaField, SubmitField, PasswordField, etc. 
+
+Estos tipos deben ser importados de wtforms. 
+
+También tenemos validadores como DataRequired, Length y Email. Estos validadores deben se importados de wtforms.validators.
+
+Ejemplo:
+
+	class SubmitForm(FlaskForm):
+		name = StringField('Nombre', validators=[DataRequired(), Length(max=54)])
+		lastname = StringField('Apellidos', validators=[DataRequired(), Length(max=120)])
+		email = StringField('Email', validators=[EmailField()])
+		submit = SubmitField('Registrar')
+		
+El primer valor dentro del tipo de campo sirve para mostrar el nombre del campo que luego tendrá su etiqueta. 
+
+En la vista, primero importamos el formulario de la clase correspondiente. 
+
+def sign_up_form():
+	form = SubmitForm()
+	
+	if form.validate_submit(): --> Permite comprobar que el formulario está correctamente validado y contiene toda la información.
+		nombre = form.name.data() --> De esta forma obtenemos los datos del formulario que envía el cliente.
+		
+		next = request.args.get('next')
+		
+	if next:
+		return redictect(next)
+		
+	return render_template('template.html', form=form)
+	
+Después, en el HTML debemos declarar el form.hidden_tag() por si hay campos invisibles del formulario, como por ejemplo el token de csrf que envía
+el front al back. 
+
+	{{form.hidden_tag()}}
+	
+	<div>
+		{{form.name.label}} --> Etiqueta del formulario
+		{{form.name}} --> Campo del formulario
+		{% for error in form.name.errors %} --> Listamos los errores de validación, si los hay.
+			<p>{{error}}</p>
+		{% endfor %}
+	</div>

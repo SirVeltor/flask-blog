@@ -1,0 +1,85 @@
+
+PARÁMETROS DE CONFIGURACIÓN DE FLASK
+=====================================
+
+Cualquier aplicación Flask depende de una serie de parámetros: 
+
+	- ENV: Indica el entorno en el que se está ejecutando la aplicación. Puede tener los valores
+	development y production.
+	- DEBUG: Indica si el modo debug está activo. Si se produce una excepción no controlada
+	se mostrará de una forma "amigable" y el servidor se reinicia si detecta cambios en el código.se
+	- TESTING: Habilita el modo de test. Las excepciones no son controladas por los manejadores
+	de error de la aplicación y llega al código de los tests.Se establece su valor a True cuando estás
+	ejecutando tests. 
+	- SECRET_KEY: Es necesaria para firmar la cookie de sesión, aunque puede ser utilizada para 
+	otros aspectos de seguridad. 
+	
+El atributo config (app.config) del objeto Flask es el lugar en el que el Framework y las extensiones
+establecen algunos valores de configuración y donde se definen los parámetros de configuración.
+
+***El bojeto config es una subclase de dictionary así que puede manipularse como un diccionario.
+
+Separar las configuraciones por entorno
+=============================
+
+Podemos tener una clase "padre" llamada Config que tenga una serie de atributos y luego
+varias clases, una para cada entorno, que hereden de Config y sobreescriban los atributos
+en función del entorno. 
+
+class Config(object):
+    SECRET_KEY = '7110c8ae51a4b5af97be6534caef90e4bb9bdcb3380af008f90b23a5d1616bf319bc298105da20fe'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+	
+class ProductionConfig(Config):
+    SQLALCHEMY_DATABASE_URI = 'postgresql://db_user:db_pass@prod_host:port/db_name'
+	
+class DevelopmentConfig(Config):
+    SQLALCHEMY_DATABASE_URI = 'postgresql://db_user:db_pass@dev_host:port/db_name'
+	
+class TestingConfig(Config):
+    DEBUG = True
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'postgresql://db_user:db_pass@test_host:port/db_name'
+	
+Posteriormente, para cargar los valores en el objeto config, usariamos el metodo from_object.
+Éste método solo tiene encuenta las claves que encuentre en mayúsculas.
+
+	def create_app(settings_module='config.DevelopmentConfig'):
+		app = Flask(__name__)
+		app.config.from_object(settings_module)
+		
+No obstante, lo mejor es tener un fichero con parámetros por cada entorno. Tal que así: 
+
+1 - config/default.py
+
+	SECRET_KEY=dfasdfsdf
+	SQLALCHEMY_TRACK_MODIFICATIONS = False
+	
+2 - config/prod.py
+	from .default import *
+	
+	SQLALCHEMY_DATABASE_URI = asdfasdf
+	
+3 - config/dev.py
+	from .default import *
+	
+	SQLALCHEMY_DATABASE_URI=asdfasdf
+
+Luego, en el método para crear la app recibiría un parámetro con la configuración y el objeto
+app cargaría la configuración con el método from_object.
+
+	def create_app(settings_module='config.development'):
+		app = Flask(__name__)
+		app.config.from_object(settings_module)
+		
+Y por último, en la variable APP_SETTINGS_MODULE le indicariamos el módulo del que cargar
+los parámetros: 
+
+import os
+from app import create_app
+
+	APP_SETTINGS_MODULE = config.prod
+	settings_module = os.getenv('APP_SETTINGS_MODULE')
+	app = create_app(settings_module)
+
+

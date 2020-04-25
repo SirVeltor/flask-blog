@@ -1,0 +1,42 @@
+{% extends "base_template.html" %}
+
+{% block title %} {{slug_title}} {% endblock %}
+
+{% block content %}
+
+    {%if post %}
+
+        <div>
+            Titulo: {{post.title}} <br>
+            Id: {{post.id}} <br>
+            Contenido: {{post.content}} <br>
+            Autor: {{post.author}}<br>
+            {% if post.comments %}
+                {% for comment in post.comments %}
+                    {{comment}}<br>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <br>
+        <div>
+            <form action="#" method="POST">
+                {{form.hidden_tag()}}
+                {{form.comment.label}}<br>
+                {{form.comment}}<br>
+                {{form.submit()}}
+                {% for error in form.comment.errors %}
+                    <span style="color:red">{{error}}</span>
+                {% endfor %}
+            </form>
+        </div>
+
+
+    {%else %}
+
+        <label>No se ha encontrado el post</label>
+
+        <button type="button" onclick="window.location.href='{{url_for('public.index')}}'">Volver</button>
+
+    {% endif %}
+
+{% endblock %}
