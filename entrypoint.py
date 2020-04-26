@@ -1,9 +1,8 @@
 from app import create_app
-import os
+from config.config import Config, DevelopingConfig
 
-settings_module = os.getenv('APP_SETTINGS_MODULE')
-print('settings module externa-->', settings_module)
-app = create_app('config.local')
+config = DevelopingConfig
+app = create_app(config)
 
 # Inicio de la app de forma provisional
 if __name__ == '__main__':
