@@ -52,7 +52,7 @@ def login():
             login_user(user, remember=form.remember_me.data)
             next_page = request.args.get('next')
             if not next_page or url_parse(next_page).netloc != '':
-                return redirect(url_parse('index'))
+                return redirect(url_for('public.index'))
             else:
                 return redirect(next_page)
         else:
