@@ -6,11 +6,13 @@ class Config(object):
 
 class DevelopingConfig(Config):
     DEBUG=True
+    # SQLALCHEMY_ECHO = True
     ENV = 'local'
 
 class TestingConfig(Config):
     DEBUG=True
     TESTING=True
+    WTF_CSRF_ENABLED = False
     ENV = 'testing'
 
 class ProductionConfig(Config):

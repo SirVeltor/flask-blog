@@ -7,14 +7,16 @@ from ..auth.routes import current_user
 from werkzeug.exceptions import NotFound
 import logging
 
+#Creamos un nuevo objeto Logger conel metodo getLogger y le pasamos el módulo que lo está llamando
 logger = logging.getLogger(__name__)
 
 @public_bp.route('/')
 def index():
     posts = Post.get_all()
-    logger.debug("Mostrando los posts con logger")
-    if posts is None:
-        raise NotFound(posts)
+    logger.info("---------------> Mostrando los posts del blog")
+    # if posts is not None:
+    #     for post in posts:
+    #         post.created = post.created.strftime('%d de %m del %Y')
     return render_template('public/index.html', posts=posts)
 
 

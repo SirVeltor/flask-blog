@@ -1,5 +1,8 @@
 from app import db
 import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Post(db.Model):
@@ -28,7 +31,8 @@ class Post(db.Model):
 
     @staticmethod
     def get_all():
-        return Post.query.all()
+        posts = Post.query.all()
+        return posts
 
 
 class Comment(db.Model):

@@ -2,8 +2,8 @@ from flask import Flask, render_template
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from logging import StreamHandler
 import logging
+from .common.filters import format_datetime
 
 
 login_manager = LoginManager()
@@ -19,11 +19,10 @@ def create_app(settings_module):
 
 
     if app.config.get('TESTING'):
-        app.config.from_pyfile('config-testing.py', silent=True)
+        app.config.from_pyfile('config_testing.py', silent=True)
     else:
         app.config.from_pyfile('config.py')
-    
-    configure_logging(app)    
+
 
 
     login_manager.init_app(app)
@@ -31,6 +30,9 @@ def create_app(settings_module):
 
     db.init_app(app)
     migrate.init_app(app, db)
+
+    #Registro de los filtros
+    register_filters(app)
 
     # Registro de los blueprints
     from .public import public_bp
@@ -41,6 +43,8 @@ def create_app(settings_module):
     app.register_blueprint(auth_bp)
 
     register_error_handlers(app)
+
+    configure_logging(app)
 
     return app
 
@@ -56,15 +60,26 @@ def register_error_handlers(app):
         return render_template("404.html"), 404
 
 def configure_logging(app):
+
+    # Eliminamos los posibles manejadores del logger por defecto (si existen)
     del app.logger.handlers[:]
 
+    #Añadimos el logger por defecto a la lista de loggers
     loggers = [app.logger, ]
     handlers = []
 
+    #Creamos un manejador para escribir los mensajes por consola
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.DEBUG)
-    console_handler.setFormatter(verbose_formatter())
+    console_handler.setFormatter(logging.Formatter('[%(asctime)s] - %(name)s - %(levelname)s - %(message)s'))
     handlers.append(console_handler)
+
+    file_handler = logging.FileHandler("flask-blog.log")
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(logging.Formatter('[%(asctime)s] - %(name)s - %(levelname)s - %(message)s'))
+    handlers.append(file_handler)
+
+    #Añadimos cada uno de los handlers a cada uno de los loggers
 
     for l in loggers:
         for handler in handlers:
@@ -72,8 +87,5 @@ def configure_logging(app):
         l.propagate = False
         l.setLevel(logging.DEBUG)
 
-def verbose_formatter():
-    return logging.Formatter(
-        '[%(asctime)s.%(msecs)d]\t %(levelname)s \t[%(name)s.%(funcName)s:%(lineno)d]\t %(message)s',
-        datefmt='%d/%m/%Y %H:%M:%S'
-    )
+def register_filters(app):
+    app.jinja_env.filters['datetime'] = format_datetime
