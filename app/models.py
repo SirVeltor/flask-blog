@@ -23,7 +23,7 @@ class Post(db.Model):
     def save(self):
         if not self.id:
             db.session.add(self)
-        db.session.commit()
+        db.session.commit()9
 
     @staticmethod
     def get_post_id(post_id):
